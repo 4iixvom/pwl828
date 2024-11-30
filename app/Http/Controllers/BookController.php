@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\BooksExport;
+use App\Imports\BooksImport;
 use App\Models\Book;
 use App\Models\Bookshelf;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BookController extends Controller
 {
@@ -90,4 +94,27 @@ class BookController extends Controller
         );
         return redirect()->route('book')->with($notification);
     }
+
+    
+public function print()
+{
+    $data['books'] = Book::all();
+    $pdf = Pdf::loadview('books.print', $data);
+    return $pdf->stream('daftar_buku.pdf');
+}
+    public function export(){
+        return Excel::download(new BooksExport, 'dataBuku.xlsx');
+    }
+    public function import(request $request){
+        $request->validate([
+            'file'=> 'required'
+        ]);
+        Excel::import(new BooksImport, $request->file('file'));
+    
+    $notification = array(
+        'message' => 'Data Buku Berhasil Dihapus',
+        'alert-type' => 'success',
+    );
+    return redirect()->route('book')->with($notification);
+}
 }
